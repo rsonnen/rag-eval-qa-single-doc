@@ -1,0 +1,18 @@
+# Single-document question generator configuration
+#
+# All models accessed via LiteLLM proxy.
+
+generator_model:
+  name: gpt-5.2
+  kwargs:
+    reasoning_effort: medium
+
+validator_model:
+  name: gemini-2.5-flash
+  kwargs:
+    reasoning_effort: none
+
+deduplicator_model:
+  name: gpt-5-mini
+  kwargs:
+    reasoning_effort: minimal

@@ -1,0 +1,72 @@
+template: |
+  You are validating a Q/A pair for an evaluation dataset.
+
+  {% if corpus_context %}
+  CORPUS CONTEXT:
+  {{ corpus_context }}
+
+  {% endif %}
+  {% if scenario_description %}
+  EVALUATION SCENARIO:
+  {{ scenario_description }}
+
+  {% endif %}
+  {% if mode == "visual" %}
+  VALIDATION PROCESS (VISUAL MODE):
+
+  STEP 1 - VIEW (1-2 tool calls): Use view_page to examine the referenced visual
+  content. The question should specify which page or visual element to check.
+
+  STEP 2 - VERIFY (0-1 tool calls): If needed, read surrounding text to confirm
+  context. If you cannot find the visual content referenced, STOP - mark as
+  unanswerable and proceed to step 3.
+
+  STEP 3 - SUBMIT (MANDATORY): Call submit_assessment immediately with your verdict.
+  - If you found the visual content and can answer: set answerable=true, provide
+    my_answer based on what you SAW (not text descriptions), compare to proposed
+  - If you could not find it: set answerable=false, my_answer="Visual content not found"
+  - If the answer is in surrounding text without needing the visual: set is_trivial=true
+
+  VISUAL CONTENT RULES:
+  - The question MUST require viewing the visual to answer correctly
+  - Mark is_trivial=true if the answer appears in surrounding text
+  - Mark is_trivial=true if the question is about irrelevant artifacts:
+    library stamps, foxing, blank pages, page numbers, scanning artifacts
+  {% else %}
+  VALIDATION PROCESS (TEXT MODE):
+
+  STEP 1 - LOCATE: Search for key terms from the question or proposed answer.
+  Use specific terms that would appear near the answer. If your first search
+  finds nothing, try different terms before giving up.
+
+  STEP 2 - VERIFY: If step 1 found relevant content, read surrounding lines to
+  confirm the answer. If you cannot find relevant content after a few searches,
+  mark as unanswerable and proceed to step 3.
+
+  STEP 3 - SUBMIT (MANDATORY): Call submit_assessment with your verdict.
+  - If you found the answer: set answerable=true, provide my_answer, compare to proposed
+  - If you could not find it: set answerable=false, my_answer="Not found in document"
+  {% endif %}
+
+  LIMIT: Maximum 5 document tool calls before you must call submit_assessment.
+
+  TRIVIALITY CHECK:
+  A question is TRIVIAL (set is_trivial=true) if:
+
+  1. It could be answered correctly by someone with domain knowledge who has NOT
+     read this specific document. The question must require details unique to
+     THIS document, not general domain knowledge.
+
+  2. It references document structure ("In Section X...", "According to the
+     authors...", "On page N..."). These test reading comprehension, not domain
+     knowledge.
+
+  3. It's a yes/no question that doesn't test a surprising or specific fact.
+
+  ASSESSMENT CRITERIA:
+  - answerable: Can YOU answer from the document? (not "could someone")
+  - my_answer: Your answer based ONLY on document content
+  - answer_matches: Does your answer convey the same core information as proposed?
+    (Does not need to be word-for-word identical)
+  - is_ambiguous: Does the question have multiple valid interpretations?
+  - is_trivial: See triviality check above

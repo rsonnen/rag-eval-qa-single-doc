@@ -1,0 +1,26 @@
+template: |
+  You are checking if a new question is a semantic duplicate of existing questions.
+
+  Two questions are duplicates if they ask for THE SAME INFORMATION, even if worded
+  differently. They test the same knowledge and would have the same answer.
+
+  Examples of DUPLICATES:
+  - "Who wrote Hamlet?" vs "Which playwright authored Hamlet?"
+  - "What year did WWII end?" vs "When was World War II concluded?"
+  - "What is the capital of France?" vs "Name France's capital city"
+
+  Examples of NOT duplicates (related but different):
+  - "Who wrote Hamlet?" vs "When was Hamlet written?" (different facts)
+  - "What is the capital of France?" vs "What is France's largest city?" (different questions)
+  - "How many pages is the document?" vs "How many chapters does it have?" (different counts)
+
+  NEW QUESTION TO CHECK:
+  {{ new_question }}
+
+  EXISTING QUESTIONS:
+  {% for q in existing_questions %}
+  {{ loop.index }}. {{ q }}
+  {% endfor %}
+
+  Determine if the new question is semantically equivalent to ANY of the existing
+  questions. If it duplicates one, provide that question EXACTLY as written above.

@@ -1,0 +1,164 @@
+template: |
+  You are generating an evaluation question from a document in the
+  "{{ corpus_name }}" corpus.
+
+  CORPUS CONTEXT:
+  {{ corpus_context }}
+
+  EVALUATION SCENARIO:
+  {{ scenario_description }}
+
+  {% if previous_questions %}
+  PREVIOUSLY ASKED QUESTIONS (do not repeat or ask similar):
+  {% for q in previous_questions %}
+  - {{ q }}
+  {% endfor %}
+
+  {% endif %}
+  {% if previous_viewed_pages %}
+  PREVIOUSLY VIEWED PAGES (already examined in prior attempts):
+  {{ previous_viewed_pages | join(", ") }}
+  Do not re-examine these pages - they did not yield suitable questions.
+
+  {% endif %}
+  YOUR TASK:
+  Create ONE question that fits the evaluation scenario above.
+
+  CRITICAL DISTINCTION - DOMAIN QUESTIONS vs DOCUMENT TRIVIA:
+
+  A domain question is something a person in that field would actually ask.
+  Document trivia is a "prove you read this" quiz about a specific text.
+
+  The scenario description tells you what kind of question to write. Write THAT
+  kind of question. The answer should come from this document, but the question
+  itself should be a legitimate domain question - not a question about this
+  document's structure or what its authors wrote.
+
+  FORBIDDEN PATTERNS (these produce document trivia, not domain questions):
+  - "In Section X..." or "In the appendix..." or "On page N..."
+  - "According to the authors..." or "The paper states..."
+  - "What method/approach did [specific entity] use..."
+  - "What were the exact values/parameters/numbers for..."
+  - Any reference to document structure (sections, figures, tables, equations)
+
+  WHAT TO DO INSTEAD:
+  Ask the question that someone in the domain would ask, where this document
+  happens to contain the answer.
+
+  A law student asks: "What factors determine whether a patent claim term receives
+  its ordinary meaning versus a specialized definition?"
+  NOT: "In the Markman case, what did the court say about claim construction?"
+
+  A DM asks: "Can a creature affected by Hold Person attempt to break free on
+  subsequent turns?"
+  NOT: "According to the Hold Person spell entry, what happens after the initial save?"
+
+  A historian asks: "What public health measures were implemented in Philadelphia
+  during the 1918 influenza outbreak?"
+  NOT: "In the October 15, 1918 edition, what headline appeared on page 3?"
+
+  A bartender asks: "What's the classic ratio of spirits to vermouth in a
+  pre-Prohibition Manhattan?"
+  NOT: "In Chapter 4 of the 1912 bartender's guide, what proportions are listed?"
+
+  The question should make sense to someone who has never seen this specific
+  document. It's a question about the DOMAIN that this document answers.
+
+  REQUIREMENTS:
+  - Question must fit the evaluation scenario described above
+  - Question must have a clear, verifiable answer found in this document
+  - Question must be different from any previously asked questions
+  - Question must NOT reference document structure or "the authors"
+
+  {% if mode == "visual" %}
+  VISUAL CONTENT MODE:
+  Your question MUST require understanding visual content (figures, tables, charts,
+  diagrams, illustrations) to answer correctly. A question that can be answered
+  from text alone is NOT acceptable.
+
+  CRITICAL - RELEVANCE TO CORPUS:
+  Your visual question must be relevant to the CORPUS CONTEXT and EVALUATION
+  SCENARIO above. Ask about the substantive visual content that makes this
+  document valuable, not incidental visual artifacts.
+
+  TRIVIAL CONTENT TO SKIP:
+  When you view a page, if you see ONLY the following, do NOT ask about it:
+  - Blank or nearly blank pages
+  - Library stamps, ownership marks, or bookplates
+  - Age-related damage (foxing, stains, tears)
+  - Page numbers, headers, or decorative borders
+  - Scanning artifacts or digitization marks
+  - Book spines, covers, or binding photographs
+  - Title pages or frontispieces (unless they contain unique visual data)
+  Instead, view different pages to find substantive content.
+
+  EXPLORATION PROCESS FOR VISUAL CONTENT:
+
+  STEP 1 - DISCOVER: Call list_visual_content to find visual elements in this
+  document. If the result shows no visual content or indicates "not applicable",
+  immediately call report_exhausted with the reason "No visual content found in
+  this document" and stop.
+
+  STEP 2 - EXAMINE: Use view_page to visually examine pages. Look for substantive
+  visual content relevant to the corpus context - this could be:
+  - Scientific illustrations, diagrams, or specimen drawings
+  - Tables with data that can be compared or analyzed
+  - Charts, graphs, or figures showing relationships
+  - Maps, architectural drawings, or technical diagrams
+  - Any visual content that relates to the evaluation scenario
+
+  If a page contains only trivial content (see list above), immediately view a
+  different page. Do not waste time on blank or artifact-only pages.
+
+  ERROR HANDLING: If view_page returns an error (e.g., "cannot be rendered" or
+  "exceeds size limit"), that page is too complex to display. Do NOT retry the
+  same page. Instead, try a DIFFERENT page number. If multiple pages fail, try
+  pages from different parts of the document.
+
+  STEP 3 - CONTEXT: Read the text surrounding the visual element to understand
+  what it represents and how it relates to the document's main topic.
+
+  STEP 4 - FORMULATE: Create a question that REQUIRES viewing the visual to answer
+  AND fits the evaluation scenario. The question should be about the domain content
+  shown in the visual, not about "Figure X in this document."
+
+  STEP 5 - SUBMIT:
+  - Call submit_qa with the question, answer, and content_refs listing the visual
+    elements required (e.g., ["Figure 2", "Table 1", "page 45 illustration"]).
+  - If you cannot find any visual content suitable for a new question different
+    from previous ones, call report_exhausted with a brief explanation.
+
+  {% else %}
+  TEXT MODE:
+  Focus on textual content. Do not reference figures or tables.
+
+  EXPLORATION PROCESS FOR TEXT:
+
+  STEP 1 - ORIENT: Read lines 1-100 to understand what this document is about.
+  Note the total line count returned - you need this for step 2.
+
+  STEP 2 - SURVEY: Based on total length, read at least two more sections:
+  - One from the middle third of the document
+  - One from the final third of the document
+  This prevents questions that only test the introduction.
+
+  STEP 3 - SEARCH: Use the search tool to find specific content relevant to
+  the evaluation scenario. Run at least 2 different searches looking for
+  substantive content worth asking about. Think about what terms or concepts
+  would appear in the most important parts of this document.
+
+  STEP 4 - SELECT: From everything you've found, identify content that:
+  - Fits the evaluation scenario
+  - Would make a legitimate domain question
+  - Has a definite, verifiable answer
+  - Appears in the middle or later portions (not just the introduction)
+
+  STEP 5 - FORMULATE: Write your question as a domain question. Imagine someone
+  in that field asking a colleague or searching for information. That's the
+  question format you want.
+
+  STEP 6 - SUBMIT OR REPORT EXHAUSTED:
+  - If you found suitable content: call submit_qa with your question and answer.
+  - If you thoroughly explored but cannot find ANY content suitable for a new,
+    different question: call report_exhausted with a brief explanation.
+  {% endif %}
