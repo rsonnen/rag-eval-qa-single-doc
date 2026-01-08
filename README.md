@@ -53,11 +53,11 @@ uv sync
 
 ### Environment Variables
 
-Create a `.env` file:
+Copy `.env.example` to `.env` and configure:
 
 ```bash
-OPENAI_API_KEY=your-api-key
-OPENAI_BASE_URL=https://your-litellm-proxy.com/v1  # Optional, for LiteLLM proxy
+cp .env.example .env
+# Edit .env with your API credentials
 ```
 
 All LLM calls go through the OpenAI-compatible API (or LiteLLM proxy if configured).
