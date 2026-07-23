@@ -74,8 +74,7 @@ def _shutdown_otel() -> None:
     """Flush and shutdown the OTLP exporter."""
     global _logger_provider
     if _logger_provider is not None:
-        # OTel SDK has incomplete type stubs for shutdown()
-        _logger_provider.shutdown()  # type: ignore[no-untyped-call]
+        _logger_provider.shutdown()
         _logger_provider = None
 
 
