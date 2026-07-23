@@ -48,9 +48,6 @@ htmlcov/
 .env
 .env.local
 
-# uv
-uv.lock
-
 # OS
 .DS_Store
 Thumbs.db
