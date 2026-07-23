@@ -8,7 +8,7 @@ generator_model:
     reasoning_effort: medium
 
 validator_model:
-  name: gemini-2.5-flash
+  name: gemini-3.6-flash
   kwargs:
     reasoning_effort: none
 
