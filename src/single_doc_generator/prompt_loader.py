@@ -36,4 +36,5 @@ def load_prompt(name: str, **variables: TemplateVar) -> str:
         data = yaml.safe_load(f)
 
     template = Template(data["template"])
-    return template.render(**variables)
+    rendered: str = template.render(**variables)
+    return rendered

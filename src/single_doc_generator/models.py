@@ -5,13 +5,13 @@ and the question generation pipeline. They provide type safety and validation
 for tool inputs/outputs and Q/A pair management.
 """
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 
 
-class GenerationMode(str, Enum):
+class GenerationMode(StrEnum):
     """Question generation mode.
 
     TEXTUAL: Factual recall questions from document text only.
@@ -22,7 +22,7 @@ class GenerationMode(str, Enum):
     VISUAL = "visual"
 
 
-class RejectionReason(str, Enum):
+class RejectionReason(StrEnum):
     """Reason why a question was rejected.
 
     VALIDATION_FAILED: Validator could not confirm the answer.
@@ -105,7 +105,7 @@ class RejectedQA(BaseModel):
     )
 
 
-class DocumentFormat(str, Enum):
+class DocumentFormat(StrEnum):
     """Supported document formats."""
 
     TEXT = "text"

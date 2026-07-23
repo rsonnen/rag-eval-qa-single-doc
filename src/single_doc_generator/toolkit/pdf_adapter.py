@@ -56,18 +56,18 @@ class PDFAdapter(DocumentAdapter):
             ValueError: If PDF cannot be opened or is encrypted.
         """
         try:
-            self._doc = pymupdf.open(self.file_path)
+            self._doc = pymupdf.open(self.file_path)  # type: ignore[no-untyped-call]  # pymupdf ships no type info
         except Exception as e:
             raise ValueError(f"Cannot open PDF: {e}") from e
 
         if self._doc.is_encrypted:
-            self._doc.close()
+            self._doc.close()  # type: ignore[no-untyped-call]  # pymupdf ships no type info
             self._doc = None
             raise ValueError("Cannot open encrypted PDF")
 
         # Extract text from all pages and split into lines
         all_text: list[str] = []
-        for page in self._doc:
+        for page in self._doc:  # type: ignore[attr-defined]  # pymupdf Document is iterable at runtime
             page_text = page.get_text()
             all_text.append(page_text)
 
@@ -78,7 +78,7 @@ class PDFAdapter(DocumentAdapter):
     def __del__(self) -> None:
         """Close the PDF document on cleanup."""
         if self._doc is not None:
-            self._doc.close()
+            self._doc.close()  # type: ignore[no-untyped-call]  # pymupdf ships no type info
 
     @property
     def total_lines(self) -> int:
@@ -221,10 +221,10 @@ class PDFAdapter(DocumentAdapter):
         # Try rendering at progressively lower DPI until under size limit
         for dpi in self.DPI_LEVELS:
             zoom = dpi / 72  # Default matrix is 72 DPI
-            matrix = pymupdf.Matrix(zoom, zoom)
+            matrix = pymupdf.Matrix(zoom, zoom)  # type: ignore[no-untyped-call]  # pymupdf ships no type info
             pixmap = pdf_page.get_pixmap(matrix=matrix)
 
-            png_bytes = pixmap.tobytes("png")
+            png_bytes = pixmap.tobytes("png")  # type: ignore[no-untyped-call]  # pymupdf ships no type info
 
             if len(png_bytes) <= self.MAX_IMAGE_BYTES:
                 image_base64 = base64.b64encode(png_bytes).decode("ascii")
@@ -259,7 +259,7 @@ class PDFAdapter(DocumentAdapter):
         if self._doc is None:
             return VisualContentResult(items=items, total_items=0)
 
-        for page_num, page in enumerate(self._doc, start=1):
+        for page_num, page in enumerate(self._doc, start=1):  # type: ignore[arg-type, var-annotated]  # pymupdf Document is iterable at runtime
             # Get list of images on this page
             # Returns list of tuples: (xref, smask, width, height, bpc, colorspace, ...)
             image_list = page.get_images(full=True)
