@@ -147,7 +147,6 @@ def _invoke_with_retry(
             return agent.invoke(
                 {
                     "messages": [HumanMessage(content=validation_request)],
-                    "pending_images": [],
                 },
                 {"callbacks": [tracer], "recursion_limit": 15},
             )

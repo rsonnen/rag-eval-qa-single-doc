@@ -212,9 +212,8 @@ def generate_question(
                 "messages": [
                     HumanMessage(content="Generate one question about this document.")
                 ],
-                "pending_images": [],
             },
-            {"callbacks": [tracer], "recursion_limit": 25},
+            {"callbacks": [tracer], "recursion_limit": 80},
         )
     except GraphRecursionError:
         logger.warning("Generator hit recursion limit for document: %s", document_path)

@@ -240,9 +240,7 @@ The adapter is configured per-format, not per-corpus. New formats require implem
 
 For text tools (read_lines, search, list_visual_content), returns are standard text content.
 
-For view_page, the tool returns a `Command` that updates agent state with pending image data. The custom agent graph (see `agent.py`) includes an image injector node that runs after all tool responses complete. This node collects any pending images and injects them as a single `HumanMessage` with multimodal content before the agent continues.
-
-This deferred injection pattern is necessary because OpenAI's API only allows images in user messages (not tool messages) and requires all tool responses to immediately follow the assistant message with tool_calls. By deferring image injection until after all tools complete, we avoid violating message ordering constraints when multiple view_page calls execute in parallel.
+For view_page, the tool returns multimodal content (a text part and an `image_url` part holding the rendered page) inside the tool message itself. Each tool response therefore directly follows the assistant message that requested it, which Gemini-backed models require to carry their reasoning state (thought signatures) from one tool call to the next.
 
 The generator model must be vision-capable for visual mode.
 
@@ -318,14 +316,13 @@ check_exit_node → [conditional]
 
 ### Tool Integration
 
-The generator and validator use a custom agent graph (`create_agent` in `agent.py`) rather than LangGraph's built-in `create_react_agent`. This custom graph handles the complexity of vision tool responses while maintaining the standard ReAct pattern.
+The generator and validator use a custom agent graph (`create_agent` in `agent.py`) rather than LangGraph's built-in `create_react_agent`. It implements the standard ReAct pattern.
 
 Tools are defined with LangChain's @tool decorator and bound to the model via bind_tools(). The agent graph implements:
 
 1. **Agent node**: Calls the model with messages, prepending system prompt
 2. **Tools node**: Executes tool calls via LangGraph's ToolNode
-3. **Image injector node**: After tools complete, if any view_page calls added pending images, injects them as a HumanMessage before returning to the agent
-4. **Routing**: Agent continues calling tools until no tool_calls in response
+3. **Routing**: Agent continues calling tools until no tool_calls in response
 
 The validator follows the same pattern - it receives the question as input and uses document tools to attempt answering.
 

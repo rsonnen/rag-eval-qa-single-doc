@@ -7,23 +7,16 @@ and format outputs as strings suitable for LLM consumption.
 The tools are created via a factory function that binds them to a specific
 document path, since agents typically work with one document at a time.
 
-For vision-capable tools (view_page), the tool returns a Command that updates
-the agent state with pending image data. The custom vision agent graph then
-injects images as a HumanMessage after all tool responses complete. This
-pattern is necessary because OpenAI's API only allows images in user messages
-and requires all tool responses to immediately follow the assistant message.
+The view_page tool returns the rendered page image as multimodal tool-message
+content, so the model sees it in the tool response itself.
 """
 
 import re
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 
-from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
-from langchain_core.tools.base import InjectedToolCallId
-from langgraph.types import Command
 
-from single_doc_generator.agent import PendingImage
 from single_doc_generator.models import SearchMatch
 from single_doc_generator.toolkit import tools as core_tools
 
@@ -176,9 +169,6 @@ def _create_search_tool(document_path: Path) -> LangChainTool:
 def _create_view_page_tool(document_path: Path) -> LangChainTool:
     """Create a view_page tool bound to a document.
 
-    Returns a Command that updates agent state with pending image data.
-    The image is injected as a HumanMessage after all tool responses complete.
-
     Args:
         document_path: Path to the document.
 
@@ -187,10 +177,7 @@ def _create_view_page_tool(document_path: Path) -> LangChainTool:
     """
 
     @tool
-    def view_page(
-        page: int,
-        tool_call_id: Annotated[str, InjectedToolCallId],
-    ) -> Command[str]:
+    def view_page(page: int) -> str | list[str | dict[str, Any]]:
         """View a specific page of the document as an image.
 
         For paginated formats like PDF, this renders the page visually.
@@ -198,41 +185,20 @@ def _create_view_page_tool(document_path: Path) -> LangChainTool:
 
         Args:
             page: Page number to view (1-indexed).
-            tool_call_id: Injected by LangGraph, used for tool response.
 
         Returns:
-            Command updating state with image data for later injection.
+            Multimodal content with the page image, or an explanatory message.
         """
         try:
             result = core_tools.view_page(document_path, page=page)
         except ValueError as e:
             # Page couldn't be rendered (too large, out of range, etc.)
-            # Return error as tool message so agent can try a different page
-            return Command(
-                update={
-                    "messages": [
-                        ToolMessage(
-                            content=(f"ERROR: {e}. Try a DIFFERENT page number."),
-                            tool_call_id=tool_call_id,
-                        )
-                    ],
-                }
-            )
+            return f"ERROR: {e}. Try a DIFFERENT page number."
 
         if result.not_applicable:
-            # No image - just return text message via Command
-            return Command(
-                update={
-                    "messages": [
-                        ToolMessage(
-                            content=(
-                                "This document format doesn't have visual pages. "
-                                "Use read_lines or search instead."
-                            ),
-                            tool_call_id=tool_call_id,
-                        )
-                    ],
-                }
+            return (
+                "This document format doesn't have visual pages. "
+                "Use read_lines or search instead."
             )
 
         # These are guaranteed non-None when not_applicable is False
@@ -242,25 +208,13 @@ def _create_view_page_tool(document_path: Path) -> LangChainTool:
         if page_num is None or total is None or image_data is None:
             raise ValueError("view_page result missing required fields")
 
-        # Return Command with ToolMessage AND pending image for later injection
-        return Command(
-            update={
-                "messages": [
-                    ToolMessage(
-                        content=f"Page {page_num} of {total} "
-                        f"rendered. Image will be shown after tool execution.",
-                        tool_call_id=tool_call_id,
-                    )
-                ],
-                "pending_images": [
-                    PendingImage(
-                        page=page_num,
-                        total_pages=total,
-                        image_base64=image_data,
-                    )
-                ],
-            }
-        )
+        return [
+            {"type": "text", "text": f"Page {page_num} of {total}:"},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{image_data}"},
+            },
+        ]
 
     return view_page
 

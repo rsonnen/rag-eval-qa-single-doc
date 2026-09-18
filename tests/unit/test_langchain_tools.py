@@ -3,9 +3,7 @@
 from unittest.mock import patch
 
 from langchain_core.messages import ToolMessage
-from langgraph.types import Command
 
-from single_doc_generator.agent import PendingImage
 from single_doc_generator.models import SearchMatch
 from single_doc_generator.toolkit.langchain_tools import (
     _format_search_match,
@@ -131,7 +129,6 @@ class TestCreateDocumentTools:
         """Test view_page returns not applicable for text files."""
         tools = create_document_tools(shakespeare_file)
         view_page = next(t for t in tools if t.name == "view_page")
-        # Tool requires injected tool_call_id via full ToolCall structure
         tool_call = {
             "args": {"page": 1},
             "name": "view_page",
@@ -140,23 +137,14 @@ class TestCreateDocumentTools:
         }
         result = view_page.invoke(tool_call)
 
-        # Result is a Command that updates state with a ToolMessage
-        assert isinstance(result, Command)
-        messages = result.update["messages"]
-        assert len(messages) == 1
-        assert isinstance(messages[0], ToolMessage)
-        assert "doesn't have visual pages" in messages[0].content
+        assert isinstance(result, ToolMessage)
+        assert result.tool_call_id == "test-id"
+        assert "doesn't have visual pages" in result.content
 
     def test_view_page_tool_pdf(self, court_opinion_pdf):
-        """Test view_page returns Command with pending image data for PDFs.
-
-        The view_page tool returns a Command that updates agent state with
-        pending_images. The image_injector node will later inject these as
-        a HumanMessage after all tool responses complete.
-        """
+        """Test view_page returns the page image inside the tool message."""
         tools = create_document_tools(court_opinion_pdf)
         view_page = next(t for t in tools if t.name == "view_page")
-        # Tool requires injected tool_call_id via full ToolCall structure
         tool_call = {
             "args": {"page": 1},
             "name": "view_page",
@@ -165,21 +153,15 @@ class TestCreateDocumentTools:
         }
         result = view_page.invoke(tool_call)
 
-        # Result should be a Command with ToolMessage and pending_images
-        assert isinstance(result, Command)
-
-        # Check ToolMessage
-        messages = result.update["messages"]
-        assert len(messages) == 1
-        assert isinstance(messages[0], ToolMessage)
-        assert "Page 1" in messages[0].content
-
-        # Check pending_images for later injection
-        pending = result.update["pending_images"]
-        assert len(pending) == 1
-        assert isinstance(pending[0], PendingImage)
-        assert pending[0].page == 1
-        assert len(pending[0].image_base64) > 100  # Base64 should have content
+        assert isinstance(result, ToolMessage)
+        assert result.tool_call_id == "test-id"
+        text_block, image_block = result.content
+        assert isinstance(text_block, dict)
+        assert isinstance(image_block, dict)
+        assert text_block["text"].startswith("Page 1 of ")
+        url = image_block["image_url"]["url"]
+        assert url.startswith("data:image/png;base64,")
+        assert len(url) > 100  # Base64 should have content
 
     def test_list_visual_content_text_file(self, shakespeare_file):
         """Test list_visual_content returns empty for text files."""
@@ -258,11 +240,8 @@ class TestCreateDocumentTools:
             }
             result = view_page.invoke(tool_call)
 
-            # Should return Command with error ToolMessage, not crash
-            assert isinstance(result, Command)
-            messages = result.update["messages"]
-            assert len(messages) == 1
-            assert isinstance(messages[0], ToolMessage)
-            assert "ERROR" in messages[0].content
-            assert "cannot be rendered" in messages[0].content
-            assert "DIFFERENT" in messages[0].content
+            # Should return an error ToolMessage, not crash
+            assert isinstance(result, ToolMessage)
+            assert "ERROR" in result.content
+            assert "cannot be rendered" in result.content
+            assert "DIFFERENT" in result.content
