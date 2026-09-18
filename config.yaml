@@ -3,16 +3,16 @@
 # All models accessed via LiteLLM proxy.
 
 generator_model:
-  name: gpt-5.2
+  name: cloud-large
   kwargs:
     reasoning_effort: medium
 
 validator_model:
-  name: gemini-3.6-flash
+  name: cloud-small
   kwargs:
     reasoning_effort: none
 
 deduplicator_model:
-  name: gpt-5-mini
+  name: cloud-small
   kwargs:
-    reasoning_effort: minimal
+    reasoning_effort: none

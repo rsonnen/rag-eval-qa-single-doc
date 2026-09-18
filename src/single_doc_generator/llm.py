@@ -24,7 +24,7 @@ def create_chat_model(
     are read from environment variables.
 
     Args:
-        model_name: The model identifier (e.g., gpt-5.1, claude-sonnet-4.5).
+        model_name: The model identifier (e.g., cloud-medium).
         model_kwargs: Additional model parameters passed to LiteLLM.
 
     Returns:

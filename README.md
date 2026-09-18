@@ -347,21 +347,21 @@ Visual mode rejects questions about non-substantive content:
 
 ### config.yaml
 
-Application configuration specifying models for each pipeline stage. Model names are LiteLLM model identifiers - configure your LiteLLM proxy to map these to actual provider models.
+Application configuration specifying models for each pipeline stage. Model names are LiteLLM capability-tier aliases (`cloud-small`, `cloud-medium`, `cloud-large`); the proxy decides which provider model serves each tier.
 
 ```yaml
 # Question generation - capable model with tool use and vision
-generator_model: gpt-5.2
+generator_model: cloud-large
 
 # Validation - different model to prevent self-confirmation
-validator_model: claude-sonnet-4.5
+validator_model: cloud-small
 
 # Deduplication - fast/cheap model, no tools needed
-deduplicator_model: gpt-5-mini
+deduplicator_model: cloud-small
 ```
 
 **Requirements**:
-- Generator and validator must use different models (configuration validates this at startup)
+- Generator and validator must use different tiers, so the validator is a different model from the generator
 - Generator and validator models must support tool use
 - For visual mode, generator and validator must support vision
 

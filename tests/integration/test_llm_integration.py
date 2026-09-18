@@ -121,19 +121,12 @@ class TestGeneratorIntegration:
 class TestValidatorIntegration:
     """Integration tests for validator with real LLMs."""
 
-    def test_gemini_reasoning_effort_prevents_empty_choices(self, shakespeare_file):
-        """Test that reasoning_effort=none prevents empty choices errors.
+    def test_validator_returns_choices_on_first_attempt(self, shakespeare_file):
+        """Test that the configured validator never returns empty choices.
 
-        This test verifies the fix for Gemini 2.5 Flash's "thinking mode" causing
-        empty choices responses during multi-turn tool calling.
-
-        By setting max_empty_choices_retries=1 (single attempt, no retries), we
-        ensure that any empty choices error would cause immediate failure. If this
-        test passes consistently, it proves the reasoning_effort=none kwarg is
-        preventing the issue.
-
-        If this test fails with VALIDATION_FAILED and "empty response", the fix
-        is not working and needs investigation.
+        Multi-turn tool calling with reasoning enabled can produce responses with
+        no choices. With max_empty_choices_retries=1 (single attempt, no retries),
+        any empty choices response fails immediately.
         """
         # Use a straightforward question that should be easily answerable
         candidate = GeneratedQA(
@@ -143,8 +136,6 @@ class TestValidatorIntegration:
         )
 
         # Call with max_empty_choices_retries=1: try once, no retries
-        # If reasoning_effort=none works, validation should succeed
-        # If it doesn't work, we'd see VALIDATION_FAILED with "empty response"
         result = validate_question(
             document_path=shakespeare_file,
             candidate=candidate,
@@ -162,8 +153,7 @@ class TestValidatorIntegration:
             # VALIDATION_FAILED could be empty choices or other issues
             # Check the reasoning to distinguish
             assert "empty response" not in result.reasoning.lower(), (
-                f"Got empty choices error despite reasoning_effort=none fix: "
-                f"{result.reasoning}"
+                f"Validator returned empty choices: {result.reasoning}"
             )
 
     def test_validates_good_question(self, shakespeare_file):

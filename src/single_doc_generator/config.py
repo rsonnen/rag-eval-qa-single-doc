@@ -16,7 +16,7 @@ class ModelConfig(BaseModel):
     """Configuration for a single LLM model.
 
     Attributes:
-        name: The model identifier (e.g., gpt-5.2, gemini-2.5-flash).
+        name: The model identifier (e.g., cloud-medium).
         kwargs: Additional parameters passed to LiteLLM (e.g., reasoning_effort).
     """
 
