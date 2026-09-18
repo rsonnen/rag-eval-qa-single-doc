@@ -3,7 +3,7 @@
 # All models accessed via LiteLLM proxy.
 
 generator_model:
-  name: cloud-large
+  name: cloud-medium
   kwargs:
     reasoning_effort: medium
 

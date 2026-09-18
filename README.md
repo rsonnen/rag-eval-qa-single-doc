@@ -351,7 +351,7 @@ Application configuration specifying models for each pipeline stage. Model names
 
 ```yaml
 # Question generation - capable model with tool use and vision
-generator_model: cloud-large
+generator_model: cloud-medium
 
 # Validation - different model to prevent self-confirmation
 validator_model: cloud-small
