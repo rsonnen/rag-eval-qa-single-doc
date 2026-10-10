@@ -38,7 +38,7 @@ The result is a set of Q/A pairs suitable for evaluating whether a RAG system ca
 
 ## Installation
 
-Requires Python 3.11+. Uses [uv](https://github.com/astral-sh/uv) for dependency management.
+Requires Python 3.14+. Uses [uv](https://github.com/astral-sh/uv) for dependency management.
 
 ```bash
 git clone https://github.com/rsonnen/rag-eval-qa-single-doc.git
