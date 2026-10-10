@@ -211,8 +211,6 @@ class HTMLAdapter(DocumentAdapter):
             return items
 
         for img in self._soup.find_all("img"):
-            if not isinstance(img, Tag):
-                continue
             src = img.get("src", "")
             alt = img.get("alt", "")
             src_str = src if isinstance(src, str) else (src[0] if src else "")
@@ -244,9 +242,6 @@ class HTMLAdapter(DocumentAdapter):
             return items
 
         for figure in self._soup.find_all("figure"):
-            if not isinstance(figure, Tag):
-                continue
-
             caption = self._get_figcaption_text(figure)
             reference = self._get_figure_image_src(figure)
 
@@ -291,9 +286,6 @@ class HTMLAdapter(DocumentAdapter):
             return items
 
         for table in self._soup.find_all("table"):
-            if not isinstance(table, Tag):
-                continue
-
             caption = self._get_table_caption(table)
             reference = self._get_table_reference(table)
             location = self._find_element_location("<table")
@@ -318,10 +310,12 @@ class HTMLAdapter(DocumentAdapter):
     def _get_table_reference(self, table: Tag) -> str:
         """Generate a reference string from table's id or class attributes."""
         table_id = table.get("id", "")
-        table_class = table.get("class", [])
+        table_class = table.get("class")
         id_str = table_id if isinstance(table_id, str) else ""
         class_str = (
-            " ".join(table_class) if isinstance(table_class, list) else table_class
+            " ".join(table_class)
+            if isinstance(table_class, list)
+            else (table_class or "")
         )
         return id_str or class_str or "table"
 

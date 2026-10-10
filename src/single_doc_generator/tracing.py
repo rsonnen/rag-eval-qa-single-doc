@@ -15,7 +15,8 @@ from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
+from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.resources import Resource
 
@@ -56,7 +57,9 @@ def _get_otel_logger() -> logging.Logger:
         _logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
 
         _otel_handler = LoggingHandler(
-            level=logging.DEBUG, logger_provider=_logger_provider
+            level=logging.DEBUG,
+            logger_provider=_logger_provider,
+            log_code_attributes=True,
         )
 
         # Register shutdown to flush logs on exit
