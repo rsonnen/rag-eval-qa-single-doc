@@ -4,30 +4,29 @@ version = "1.0.0"
 description = "Generate validated Q/A pairs from individual documents for RAG system evaluation"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "pydantic>=2.0.0",
-    "pymupdf>=1.25.0",
+    "pydantic>=2.14.0",
+    "pymupdf>=1.28.2",
     "defusedxml>=0.7.1",
-    "langgraph>=1.0.0",
-    "langchain>=0.3.0",
-    "langchain-openai>=1.0.0",
-    "python-dotenv>=1.0.0",
+    "langgraph>=1.2.14",
+    "langchain>=1.4.4",
+    "langchain-openai>=1.7.0",
+    "python-dotenv>=1.2.4",
     "pyyaml>=6.0.0",
     "jinja2>=3.1.0",
     "beautifulsoup4>=4.12.0",
     "rich>=13.0.0",
-    "opentelemetry-api>=1.20.0",
-    "opentelemetry-sdk>=1.20.0",
-    "opentelemetry-exporter-otlp-proto-http>=1.20.0",
+    "opentelemetry-api>=1.45.1",
+    "opentelemetry-sdk>=1.45.1",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.1",
 ]
 
 [project.urls]
@@ -44,8 +43,8 @@ where = ["src"]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
-    "ruff>=0.8.0",
-    "mypy>=1.11.0",
+    "ruff>=0.17.0",
+    "mypy>=2.4.0",
     "bandit[toml]>=1.7.5",
     "pre-commit>=3.5.0",
     "types-defusedxml>=0.7.0",
@@ -55,7 +54,7 @@ dev = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py314"
 exclude = [".git", "__pycache__", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache"]
 
 [tool.ruff.lint]
@@ -78,7 +77,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
