@@ -347,6 +347,22 @@ class TestHTMLAdapterListVisualContent:
         assert tables[0].alt_text == "Configuration Options"
         assert tables[0].reference == "config-options"
 
+    @pytest.mark.parametrize(
+        ("table_attrs", "expected"),
+        [
+            (' class="data wide"', "data wide"),
+            ("", "table"),
+        ],
+    )
+    def test_table_reference_without_id(self, tmp_path, table_attrs, expected):
+        """Tables without an id are referenced by class, else generically."""
+        html = tmp_path / "table.html"
+        html.write_text(f"<html><body><table{table_attrs}><tr><td>x</td></tr>")
+        result = HTMLAdapter(html).list_visual_content()
+
+        (table,) = [i for i in result.items if i.content_type == "table"]
+        assert table.reference == expected
+
     def test_figure_with_caption(self, complex_html_file):
         """Figures capture figcaption as alt_text."""
         adapter = HTMLAdapter(complex_html_file)

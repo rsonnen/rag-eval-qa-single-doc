@@ -1,10 +1,14 @@
 """Tests for agent tracing module."""
 
+import logging
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
+from opentelemetry.sdk._logs.export import InMemoryLogRecordExporter
 
+from single_doc_generator import tracing
 from single_doc_generator.tracing import _MAX_PREVIEW_LEN, _OTLP_ENDPOINT, AgentTracer
 
 
@@ -349,6 +353,40 @@ class TestOtelLoggerConfiguration:
         # _OTLP_ENDPOINT is set at module load time from env
         # It should be empty string if not set, or the env value if set
         assert isinstance(_OTLP_ENDPOINT, str)
+
+    def test_otlp_handler_exports_records_with_code_attributes(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Trace records reach the exporter with code location attributes."""
+        exporter = InMemoryLogRecordExporter()
+        monkeypatch.setattr(tracing, "_OTLP_ENDPOINT", "http://collector")
+        monkeypatch.setattr(tracing, "_logger_provider", None)
+        monkeypatch.setattr(tracing, "_otel_handler", None)
+        monkeypatch.setattr(
+            tracing, "OTLPLogExporter", MagicMock(return_value=exporter)
+        )
+        monkeypatch.setattr(tracing, "set_logger_provider", MagicMock())
+        monkeypatch.setattr(tracing.atexit, "register", MagicMock())
+
+        logger = tracing._get_otel_logger()
+        try:
+            logger.info("traced", extra={"agent_context": "validator"})
+            assert tracing._logger_provider is not None
+            tracing._logger_provider.force_flush()
+        finally:
+            logger.removeHandler(tracing._otel_handler)
+
+        (record,) = exporter.get_finished_logs()
+        assert record.log_record.body == "traced"
+        attributes = record.log_record.attributes
+        assert attributes is not None
+        assert attributes["agent_context"] == "validator"
+        assert attributes["code.function.name"] == (
+            "test_otlp_handler_exports_records_with_code_attributes"
+        )
+        assert not any(
+            isinstance(h, LoggingHandler) for h in logging.getLogger().handlers
+        )
 
     def test_max_preview_len_is_reasonable(self) -> None:
         """Max preview length is a reasonable size."""
