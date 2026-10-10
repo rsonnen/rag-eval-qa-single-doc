@@ -4,6 +4,7 @@ import re
 
 import pytest
 
+from single_doc_generator.toolkit import xml_adapter
 from single_doc_generator.toolkit.xml_adapter import XMLAdapter
 
 
@@ -220,6 +221,24 @@ class TestXMLAdapterInit:
         # Check that title was extracted
         found_title = any("Wrapped Article Title" in line for _, line in result.lines)
         assert found_title
+
+    def test_init_rejects_entity_expansion_bomb(self, tmp_path):
+        """Raises ValueError for a billion laughs document."""
+        entities = ['<!ENTITY e0 "lol">'] + [
+            f'<!ENTITY e{i} "{f"&e{i - 1};" * 10}">' for i in range(1, 10)
+        ]
+        bomb = tmp_path / "bomb.xml"
+        bomb.write_text(
+            f"<!DOCTYPE article [{''.join(entities)}]><article>&e9;</article>"
+        )
+        with pytest.raises(ValueError, match="Cannot parse XML"):
+            XMLAdapter(bomb)
+
+    def test_init_refuses_old_expat(self, simple_jats_xml, monkeypatch):
+        """Raises RuntimeError when the linked Expat predates its protections."""
+        monkeypatch.setattr(xml_adapter.pyexpat, "version_info", (2, 7, 1))
+        with pytest.raises(RuntimeError, match=r"Expat >= 2\.7\.2"):
+            XMLAdapter(simple_jats_xml)
 
 
 class TestXMLAdapterReadLines:

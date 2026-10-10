@@ -10,11 +10,10 @@ It provides semantic markup for article structure including sections, figures,
 tables, and references.
 """
 
+import pyexpat
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-
-import defusedxml.ElementTree as DefusedET
 
 from single_doc_generator.models import (
     ReadLinesResult,
@@ -33,6 +32,11 @@ JATS_NAMESPACES = {
     "mml": "http://www.w3.org/1998/Math/MathML",
     "oai": "http://www.openarchives.org/OAI/2.0/",
 }
+
+# Expat releases before 2.7.2 are open to billion laughs, quadratic blowup and
+# large-token attacks; from 2.7.2 the stdlib parser is safe on untrusted input
+# (https://docs.python.org/3/library/xml.html#xml-security).
+_MIN_SAFE_EXPAT = (2, 7, 2)
 
 
 class XMLAdapter(DocumentAdapter):
@@ -72,13 +76,19 @@ class XMLAdapter(DocumentAdapter):
         preserving section headings and paragraph structure. Also extracts
         metadata about figures and tables for visual content discovery.
 
-        Uses defusedxml for safe parsing of untrusted XML content.
-
         Raises:
+            RuntimeError: If the linked Expat is too old to parse untrusted XML.
             ValueError: If XML parsing fails.
         """
+        if pyexpat.version_info < _MIN_SAFE_EXPAT:
+            raise RuntimeError(
+                f"{pyexpat.EXPAT_VERSION} is unsafe for untrusted XML; "
+                f"Expat >= {'.'.join(map(str, _MIN_SAFE_EXPAT))} is required"
+            )
         try:
-            tree = DefusedET.parse(self.file_path)
+            # S314/B314 predate Expat's own protections; the version check above
+            # is what makes stdlib parsing safe here.
+            tree = ET.parse(self.file_path)  # noqa: S314  # nosec B314
             root = tree.getroot()
         except ET.ParseError as e:
             raise ValueError(f"Cannot parse XML: {e}") from e

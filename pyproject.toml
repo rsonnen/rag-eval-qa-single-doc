@@ -15,7 +15,6 @@ classifiers = [
 dependencies = [
     "pydantic>=2.14.0",
     "pymupdf>=1.28.2",
-    "defusedxml>=0.7.1",
     "langgraph>=1.2.14",
     "langchain>=1.4.4",
     "langchain-openai>=1.7.0",
@@ -48,7 +47,6 @@ dev = [
     "mypy>=2.4.0",
     "bandit[toml]>=1.9.4",
     "pre-commit>=4.6.2",
-    "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20260906",
 ]
 
