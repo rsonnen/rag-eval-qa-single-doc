@@ -14,8 +14,6 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import defusedxml.ElementTree as DefusedET
-
 from single_doc_generator.models import (
     ReadLinesResult,
     SearchMatch,
@@ -72,13 +70,13 @@ class XMLAdapter(DocumentAdapter):
         preserving section headings and paragraph structure. Also extracts
         metadata about figures and tables for visual content discovery.
 
-        Uses defusedxml for safe parsing of untrusted XML content.
-
         Raises:
             ValueError: If XML parsing fails.
         """
         try:
-            tree = DefusedET.parse(self.file_path)
+            # Expat >= 2.7.2 makes stdlib parsing safe on untrusted input; S314/B314
+            # predate that (https://docs.python.org/3/library/xml.html#xml-security).
+            tree = ET.parse(self.file_path)  # noqa: S314  # nosec B314
             root = tree.getroot()
         except ET.ParseError as e:
             raise ValueError(f"Cannot parse XML: {e}") from e
